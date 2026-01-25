@@ -1,0 +1,125 @@
+/* --- COLOR PALETTE FROM YOUR IMAGE --- */
+:root {
+    --chai-spice: #220000;
+    /* Dark Brown - Navbar & Text */
+    --matcha: #7F793B;
+    /* Olive Green - Buttons */
+    --caramel: #E6DDA9;
+    /* Tan - Accents */
+    --foam: #FFFBE7;
+    /* Cream - Background */
+}
+
+/* 1. General Body Style */
+body {
+    background-color: var(--foam) !important;
+    /* Forces the cream background */
+    color: var(--chai-spice);
+    /* Main text color */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 2. Custom Navbar (The Top Bar) */
+.navbar-custom {
+    background-color: var(--chai-spice) !important;
+    padding-top: 25px !important;
+    padding-bottom: 25px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-custom .navbar-brand {
+    font-size: 1.8rem !important;
+    color: var(--caramel) !important;
+    letter-spacing: 1px;
+}
+
+/* 3. Links in Navbar */
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link {
+    color: var(--caramel) !important;
+    /* Gold/Tan text */
+}
+
+.navbar-custom .nav-link:hover {
+    color: white !important;
+    /* White when hovering */
+}
+
+/* 4. Custom Buttons (Matcha Green) */
+.btn-primary {
+    background-color: var(--matcha) !important;
+    border-color: var(--matcha) !important;
+}
+
+.btn-primary:hover {
+    background-color: #5f5a2b !important;
+    /* A slightly darker green for hover */
+}
+
+/* 5. Cards (Product Boxes) */
+.card {
+    border: 1px solid var(--caramel);
+    background-color: white;
+}
+
+/* --- 6. Subtle Search Bar Styles --- */
+
+/* Stilul pentru input (casuta de text) - Transforma chenarul in linie */
+.search-input-subtle {
+    border: none !important;
+    /* Scoate toate bordurile */
+    border-bottom: 2px solid var(--caramel) !important;
+    /* Adauga doar linia de jos, culoarea Caramel */
+    border-radius: 0 !important;
+    /* Colturi patrate */
+    box-shadow: none !important;
+    /* Scoate umbra */
+    background-color: transparent !important;
+    /* Fundal transparent */
+    padding-left: 0.5rem;
+    /* Putin spatiu la inceputul textului */
+    font-weight: 500;
+    color: var(--chai-spice);
+    /* Culoarea textului scris */
+}
+
+/* Cand dai click in casuta */
+.search-input-subtle:focus {
+    border-bottom-color: var(--chai-spice) !important;
+    /* Linia devine mai inchisa la culoare */
+    box-shadow: none !important;
+    /* Asigura ca nu apare conturul albastru default */
+}
+
+/* Stilul pentru butonul de Search - Mai subtil, doar contur */
+.btn-subtle-search {
+    border: 2px solid var(--matcha) !important;
+    color: var(--matcha) !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    /* Colturi patrate */
+    font-weight: bold;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-subtle-search:hover {
+    background-color: var(--matcha) !important;
+    color: white !important;
+}
+
+/* Stilul pentru butonul Clear - La fel de subtil */
+.btn-subtle-clear {
+    border: 2px solid var(--chai-spice) !important;
+    color: var(--chai-spice) !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    /* Colturi patrate */
+    font-weight: bold;
+}
+
+.btn-subtle-clear:hover {
+    background-color: var(--chai-spice) !important;
+    color: var(--caramel) !important;
+}

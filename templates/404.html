@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="display-1 fw-bold" style="color: var(--chai-spice);">404</h1>
+
+            <h2 class="mb-3" style="color: var(--matcha);">Oops! Spilled Coffee?</h2>
+            <p class="lead text-muted mb-4">
+                We couldn't find the page you were looking for.
+                It might have been removed or the URL is incorrect.
+            </p>
+
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg shadow-sm px-4 me-2">
+                Go Home
+            </a>
+            <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary btn-lg shadow-sm px-4">
+                View Menu
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

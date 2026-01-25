@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="p-5 mb-4 rounded-3 shadow-sm" style="background-color: var(--chai-spice); color: var(--foam);">
+    <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">{{ greeting }}! ☕</h1>
+        <p class="col-md-8 fs-4 mt-3">Welcome to the most exclusive reward program.</p>
+        <p class="mt-2">Collect points with every purchase and redeem them for delicious treats.</p>
+
+        {% if not current_user.is_authenticated %}
+        <div class="mt-4">
+            <a href="{{ url_for('register') }}" class="btn btn-lg me-2"
+                style="background-color: var(--matcha); color: white; border: none;">Join Now</a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">Login</a>
+        </div>
+        {% else %}
+        <div class="mt-4">
+            <a href="{{ url_for('menu') }}" class="btn btn-lg"
+                style="background-color: var(--caramel); color: var(--chai-spice); font-weight: bold;">Check Menu</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row align-items-center mt-5">
+    <div class="col-md-6">
+        <h2 style="color: var(--chai-spice); border-left: 5px solid var(--matcha); padding-left: 15px;">
+            Today's Featured Treat
+        </h2>
+        <p class="lead text-muted">
+            Not sure what to pick? Our chef recommends this item right now.
+            Use your points to grab it!
+        </p>
+    </div>
+
+    <div class="col-md-6">
+        {% if featured_product %}
+        <div class="card mb-3 shadow border-0" style="max-width: 540px; background-color: white;">
+            <div class="row g-0 align-items-center">
+                <div class="col-md-5">
+                    <img src="{{ featured_product.image_url }}" class="img-fluid rounded-start" alt="..."
+                        style="height: 100%; object-fit: cover; min-height: 150px;">
+                </div>
+                <div class="col-md-7">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold" style="color: var(--chai-spice);">{{ featured_product.name }}
+                        </h5>
+                        <p class="card-text small">{{ featured_product.description }}</p>
+                        <p class="card-text">
+                            <span class="badge" style="background-color: var(--matcha); font-size: 0.9rem;">
+                                {{ featured_product.points_cost }} Points
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">No products available to feature. Admin, please add some!</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5 text-center">
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3 style="color: var(--matcha);">🎁 Earn</h3>
+            <p>Get points for every order you make.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3 style="color: var(--matcha);">📈 Track</h3>
+            <p>Check your history and balance in real-time.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <h3 style="color: var(--matcha);">☕ Enjoy</h3>
+            <p>Redeem points for free coffee and snacks.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow-sm">
+        <div class="card-header text-white" style="background-color: var(--chai-spice);">
+            <h4 class="mb-0 text-center">Transaction History</h4>
+        </div>
+        <div class="card-body">
+            <h5 class="mb-4">Current Balance: <span style="color: var(--matcha); font-weight: bold;">{{
+                    current_user.points }} Points</span></h5>
+
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trans in transactions %}
+                    <tr>
+                        <td>{{ trans.date.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ trans.description }}</td>
+
+                        <td class="text-end fw-bold">
+                            {% if trans.amount > 0 %}
+                            <span class="text-success">+{{ trans.amount }}</span>
+                            {% else %}
+                            <span class="text-danger">{{ trans.amount }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No transactions yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

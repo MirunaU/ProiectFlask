@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header text-center text-white" style="background-color: var(--chai-spice);">
+                <h4 class="mb-0">Autentificare</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('login') }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Introdu numele..."
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Parolă</label>
+                        <input type="password" name="password" class="form-control" placeholder="Introdu parola..."
+                            required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Intră în cont</button>
+                    </div>
+
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <small>Nu ai cont? <a href="{{ url_for('register') }}"
+                        style="color: var(--matcha);">Înregistrează-te</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
