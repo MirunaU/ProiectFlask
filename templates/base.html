@@ -35,7 +35,7 @@
 
                     <li class="nav-item"><span class="nav-link">Points: {{ current_user.points }}</span></li>
                     {% endif %}
-
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}">Profile</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
                     {% else %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>

@@ -275,6 +275,30 @@ def history():
     
     return render_template('history.html', transactions=my_transactions)
 
+# Route 12: User Profile (Update Logic)
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    # Daca userul trimite formularul (vrea sa schimbe parola)
+    if request.method == 'POST':
+        new_pass = request.form.get('new_password')
+        
+        if new_pass:
+            # 1. Updateaza parola in obiectul Python
+            current_user.password = new_pass
+            
+            # 2. Trimite comanda UPDATE catre baza de date SQL
+            db.session.commit()
+            
+            flash('Password updated successfully!', 'success')
+        else:
+            flash('Password cannot be empty.', 'warning')
+            
+        return redirect(url_for('profile'))
+
+    # Daca e GET, doar afiseaza pagina
+    return render_template('profile.html')
+
 # --- ERROR HANDLERS ---
 
 # Custom 404 Page (Page Not Found)
