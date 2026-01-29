@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div style="font-size: 5rem;">🔒</div>
+
+            <h1 class="display-1 fw-bold" style="color: var(--chai-spice);">403</h1>
+
+            <h2 class="mb-3" style="color: var(--matcha);">Kitchen Staff Only!</h2>
+            <p class="lead text-muted mb-4">
+                Oops! You don't have permission to access this area.
+                This page is restricted to administrators.
+            </p>
+
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg shadow-sm px-4">
+                Return to Safety
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

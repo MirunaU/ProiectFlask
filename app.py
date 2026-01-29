@@ -3,6 +3,9 @@ from functools import wraps
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import os
 import random
+from werkzeug.security import generate_password_hash, check_password_hash
+import logging
+from logging.handlers import RotatingFileHandler
 
 # --- IMPORT MODELS ---
 # We import the 'db' variable and the Classes from our models.py file
@@ -10,6 +13,20 @@ from models import db, User, Product, Transaction
 
 # --- CONFIGURATION (The Setup) ---
 app = Flask(__name__)
+# --- LOGGING CONFIGURATION ---
+# 'restaurant.log' remembers last 10.000 events
+if not app.debug:
+    pass
+
+file_handler = RotatingFileHandler('restaurant.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+
+app.logger.setLevel(logging.INFO)
+app.logger.info('Restaurant Rewards Startup')
 app.config['SECRET_KEY'] = 'my-secret-key-restaurant-2026' # Change this for production
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///restaurant.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -32,13 +49,10 @@ def load_user(user_id):
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Verificam daca userul e logat si daca e admin
         if not current_user.is_authenticated or current_user.role != 'admin':
-            flash('You do not have permission to access this page.', 'danger')
-            return redirect(url_for('home')) # Sau poti folosi abort(403)
+            abort(403)
         return f(*args, **kwargs)
     return decorated_function
-
 
 # --- ROUTES (The Controller Logic) ---
 
@@ -65,70 +79,74 @@ def home():
     # Render the new home.html template and pass the data
     return render_template('home.html', greeting=greeting_msg, featured_product=featured_item)
 
-# Route 2: Login Page
+# Route 2: Login Page (SECURED)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # If the user clicks the "Login" button (POST request)
     if request.method == 'POST':
         username_from_form = request.form.get('username')
         password_from_form = request.form.get('password')
 
-        # Find the user in the database
         user = User.query.filter_by(username=username_from_form).first()
 
-        # Check if user exists and password matches
-        # NOTE: In a real app, use password hashing (bcrypt) here
-        if user and user.password == password_from_form:
-            login_user(user) # Flask remembers the user is logged in
+        # --- SECURITY UPDATE: Use check_password_hash ---
+        if user and check_password_hash(user.password, password_from_form):
+            login_user(user)
+            # LOGGING:
+            app.logger.info(f'Successful login for user: {user.username}')
             flash('Login successful!', 'success')
             
-            # Redirect admin to dashboard (future) or home
             if user.role == 'admin':
                 return redirect(url_for('home'))
             else:
                 return redirect(url_for('home'))
         else:
+            # LOGGING: 
+            app.logger.warning(f'Failed login attempt for username: {username_from_form}')
             flash('Invalid username or password!', 'danger')
 
-    # If GET request, just show the login form
     return render_template('login.html')
 
 # Route 3: Logout
 @app.route('/logout')
 @login_required # Requires user to be logged in to access this
 def logout():
+    # LOGGING: 
+    app.logger.info(f'User {current_user.username} logged out.')
+
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
-# Route 4: Register Page
+# Route 4: Register Page (SECURED)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # If the user fills the form and clicks "Register" (POST)
     if request.method == 'POST':
         username_from_form = request.form.get('username')
         password_from_form = request.form.get('password')
 
-        # Check if username already exists in the database
+        # Check if username exists
         existing_user = User.query.filter_by(username=username_from_form).first()
 
         if existing_user:
             flash('Username already exists! Please choose another one.', 'danger')
             return redirect(url_for('register'))
         
-        # Create a new user (default role is 'user', points start at 0)
-        new_user = User(username=username_from_form, password=password_from_form, role='user', points=0)
+        # --- SECURITY UPDATE: Hash the password ---
+        hashed_password = generate_password_hash(password_from_form, method='pbkdf2:sha256')
         
-        # Save to database
+        # Save the HASH, not the plain password
+        new_user = User(username=username_from_form, password=hashed_password, role='user', points=0)
+        
         db.session.add(new_user)
         db.session.commit()
+
+        # LOGGING:
+        app.logger.info(f'New user registered: {username_from_form}')
 
         flash('Account created successfully! Please login.', 'success')
         return redirect(url_for('login'))
 
-    # If GET request, show the form
     return render_template('register.html')
-
 
 # --- ADMIN ROUTES ---
 
@@ -159,6 +177,8 @@ def add_product():
     # Save to DB
     db.session.add(new_item)
     db.session.commit()
+    # LOGGING:
+    app.logger.info(f'Admin added new product: {name} ({price} points)')
 
     flash(f'Product "{name}" added successfully!', 'success')
     return redirect(url_for('admin_panel'))
@@ -174,6 +194,9 @@ def delete_product(product_id):
     if item_to_delete:
         db.session.delete(item_to_delete)
         db.session.commit()
+        # LOGGING:
+        app.logger.warning(f'Admin deleted product: {item_to_delete} (ID: {product_id})')
+
         flash('Product deleted.', 'warning')
     
     return redirect(url_for('admin_panel'))
@@ -229,6 +252,8 @@ def buy_product(product_id):
         # 5. SAVE CHANGES
         db.session.commit()
         
+        # LOGGING:
+        app.logger.info(f'Transaction: {current_user.username} bought {item.name} for {item.points_cost} points.')
         flash(f'Successfully redeemed {item.name}! Enjoy.', 'success')
     else:
         flash('Not enough points!', 'danger')
@@ -260,6 +285,8 @@ def give_points():
         
         # 3. Salvam
         db.session.commit()
+        # LOGGING:
+        app.logger.info(f'Admin gave {points} points to user {user.username}. Reason: {reason}')
         flash(f'Sent {points} points to {user.username}!', 'success')
     else:
         flash('User not found.', 'danger')
@@ -275,28 +302,28 @@ def history():
     
     return render_template('history.html', transactions=my_transactions)
 
-# Route 12: User Profile (Update Logic)
+# Route 12: User Profile (Update Logic - SECURED)
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    # Daca userul trimite formularul (vrea sa schimbe parola)
     if request.method == 'POST':
         new_pass = request.form.get('new_password')
         
         if new_pass:
-            # 1. Updateaza parola in obiectul Python
-            current_user.password = new_pass
+            # --- SECURITY UPDATE: Hash the new password ---
+            current_user.password = generate_password_hash(new_pass, method='pbkdf2:sha256')
             
-            # 2. Trimite comanda UPDATE catre baza de date SQL
             db.session.commit()
-            
+
+            # LOGGING:
+            app.logger.info(f'User {current_user.username} changed their password.')
+
             flash('Password updated successfully!', 'success')
         else:
             flash('Password cannot be empty.', 'warning')
             
         return redirect(url_for('profile'))
 
-    # Daca e GET, doar afiseaza pagina
     return render_template('profile.html')
 
 # --- ERROR HANDLERS ---
@@ -308,9 +335,16 @@ def page_not_found(e):
     # Note: We return the template and the 404 status code
     return render_template('404.html'), 404
 
+# Custom 403 Page (Forbidden / Access Denied)
+@app.errorhandler(403)
+def forbidden_error(e):
+    app.logger.warning(f'Security Alert: User {current_user.username} tried to access Admin Panel!')
+    return render_template('403.html'), 403
+
 # Custom 500 Page (Internal Server Error) - Optional but good practice
 @app.errorhandler(500)
 def internal_server_error(e):
+    app.logger.error(f'Server Error: {e}')
     return "<h1>500 - Server Error</h1><p>Something went wrong on our end.</p>", 500
 
 # --- API ROUTES (Pentru aplicatii mobile / externe) ---
@@ -339,20 +373,19 @@ def api_products():
 # --- SERVER STARTUP & DATABASE SEEDING ---
 if __name__ == '__main__':
     with app.app_context():
-        # Create 'instance' folder if it doesn't exist
         if not os.path.exists('instance'):
             os.makedirs('instance')
         
-        # Create tables based on models.py
         db.create_all()
         
-        # --- SEED DATA: Create an Admin if none exists ---
+        # --- SEED DATA: Create an Admin (SECURED) ---
         if not User.query.filter_by(username='admin').first():
-            # Creating a default admin: user='admin', pass='123'
-            admin_user = User(username='admin', password='123', role='admin', points=9999)
+            # Hash the admin password '123'
+            hashed_admin_pass = generate_password_hash('123', method='pbkdf2:sha256')
+            
+            admin_user = User(username='admin', password=hashed_admin_pass, role='admin', points=9999)
             db.session.add(admin_user)
             db.session.commit()
-            print("Default 'admin' user created successfully!")
+            print("Default 'admin' user created successfully (Secured)!")
             
-    # Run the server in debug mode
     app.run(debug=True)
