@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: var(--chai-spice);">
+            History for user: <span class="fw-bold">{{ user.username }}</span>
+        </h2>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">⬅ Back to User List</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Transaction Log</h5>
+
+            {% if transactions %}
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Points</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>{{ t.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ t.description }}</td>
+
+                        <td class="{{ 'text-success' if t.amount > 0 else 'text-danger' }} fw-bold">
+                            {{ t.amount }}
+                        </td>
+
+                        <td>
+                            {% if t.status == 'Pending' and t.amount < 0 %} <span class="badge bg-warning text-dark">
+                                Pending Service</span>
+                                {% else %}
+                                <span class="badge bg-success"> Completed</span>
+                                {% endif %}
+                        </td>
+
+                        <td>
+                            {% if t.status == 'Pending' and t.amount < 0 %} <a
+                                href="{{ url_for('validate_order', trans_id=t.id) }}"
+                                class="btn btn-success btn-sm fw-bold">
+                                Mark Served
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center">No transactions found for this user.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

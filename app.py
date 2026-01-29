@@ -150,57 +150,91 @@ def register():
 
 # --- ADMIN ROUTES ---
 
-# Route 5: Admin Dashboard (View Products + Users)
+# Route 5: Main Admin Dashboard (Hub)
 @app.route('/admin')
 @login_required
 @admin_required
-def admin_panel():
-    all_products = Product.query.all()
-    all_users = User.query.filter_by(role='user').all() 
-    
-    return render_template('admin.html', products=all_products, users=all_users)
+def admin_dashboard():
+    return render_template('dashboard.html')
 
-# Route 6: Add Product (Action)
-@app.route('/admin/add', methods=['POST'])
+# Route 5.1: Manage Products Page
+@app.route('/admin/products')
+@login_required
+@admin_required
+def admin_products():
+    all_products = Product.query.all()
+    return render_template('admin.html', products=all_products)
+
+# Route 5.2: Manage Users Page
+@app.route('/admin/users')
+@login_required
+@admin_required
+def admin_users():
+    # Excludem adminul din lista ca sa nu ne stergem singuri din greseala
+    all_users = User.query.all()
+    return render_template('manage_users.html', users=all_users)
+
+
+# Route 6: Add Product
+@app.route('/admin/products/add', methods=['POST'])
 @login_required
 @admin_required
 def add_product():
-    # Get data from the form inputs
     name = request.form.get('name')
     desc = request.form.get('description')
     price = request.form.get('points_cost')
     img = request.form.get('image_url')
 
-    # Create new Product object
     new_item = Product(name=name, description=desc, points_cost=price, image_url=img)
-    
-    # Save to DB
     db.session.add(new_item)
     db.session.commit()
-    # LOGGING:
-    app.logger.info(f'Admin added new product: {name} ({price} points)')
-
+    
+    app.logger.info(f'Admin added new product: {name}')
     flash(f'Product "{name}" added successfully!', 'success')
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_products'))
 
-# Route 7: Delete Product (Action)
-@app.route('/admin/delete/<int:product_id>')
+# Route 7: Delete Product
+@app.route('/admin/products/delete/<int:product_id>')
 @login_required
 @admin_required
 def delete_product(product_id):
-    # Find product by ID
     item_to_delete = Product.query.get(product_id)
-    
     if item_to_delete:
+        name = item_to_delete.name
         db.session.delete(item_to_delete)
         db.session.commit()
-        # LOGGING:
-        app.logger.warning(f'Admin deleted product: {item_to_delete} (ID: {product_id})')
-
+        app.logger.warning(f'Admin deleted product: {name}')
         flash('Product deleted.', 'warning')
-    
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_products'))
 
+
+# Route 7.5: EDIT Product 
+@app.route('/admin/products/edit/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_product(product_id):
+    product = Product.query.get(product_id)
+    
+    if not product:
+        flash('Product not found', 'danger')
+        return redirect(url_for('admin_products'))
+
+    if request.method == 'POST':
+        # 1. Luam datele noi din formular
+        product.name = request.form.get('name')
+        product.description = request.form.get('description')
+        product.points_cost = int(request.form.get('points_cost'))
+        product.image_url = request.form.get('image_url')
+        
+        # 2. Salvam modificarile (SQL Update)
+        db.session.commit()
+        
+        app.logger.info(f'Admin edited product ID {product.id}: {product.name}')
+        flash(f'Updated {product.name} successfully!', 'success')
+        return redirect(url_for('admin_products'))
+
+    # Daca e GET, afisam formularul de editare
+    return render_template('edit_product.html', product=product)
 
 # --- SHOP ROUTES ---
 
@@ -246,7 +280,12 @@ def buy_product(product_id):
         current_user.points -= item.points_cost
         
         # 4. CREATE TRANSACTION RECORD (History)
-        new_trans = Transaction(amount=-item.points_cost, description=f"Redeemed: {item.name}", owner=current_user)
+        new_trans = Transaction(
+    amount=-item.points_cost, 
+    description=f"Redeemed: {item.name}", 
+    owner=current_user,
+    status='Pending' 
+)
         db.session.add(new_trans)
         
         # 5. SAVE CHANGES
@@ -261,37 +300,117 @@ def buy_product(product_id):
     return redirect(url_for('menu'))
 
 
-# Route 10: Give Points to User (Admin Action)
-@app.route('/admin/give-points', methods=['POST'])
+# Route 10: Give Points (Moved to User Management)
+@app.route('/admin/users/give-points', methods=['POST'])
 @login_required
 @admin_required
 def give_points():
-    # Luam datele din formular
     user_id = request.form.get('user_id')
     points = request.form.get('points')
     reason = request.form.get('reason')
 
-    # Gasim userul
     user = User.query.get(user_id)
-    
     if user:
-        # 1. Ii dam punctele
         points_int = int(points)
         user.points += points_int
         
-        # 2. Cream tranzactia (istoric)
         new_trans = Transaction(amount=points_int, description=f"Admin Reward: {reason}", owner=user)
         db.session.add(new_trans)
-        
-        # 3. Salvam
         db.session.commit()
-        # LOGGING:
-        app.logger.info(f'Admin gave {points} points to user {user.username}. Reason: {reason}')
+        
+        app.logger.info(f'Admin gave {points} points to user {user.username}.')
         flash(f'Sent {points} points to {user.username}!', 'success')
     else:
         flash('User not found.', 'danger')
 
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_users'))
+
+# Route 10.5: Delete User 
+@app.route('/admin/users/delete/<int:user_id>')
+@login_required
+@admin_required
+def delete_user(user_id):
+    # Protectie: Nu lasam adminul sa se stearga pe el insusi
+    if user_id == current_user.id:
+        flash('You cannot delete yourself!', 'danger')
+        return redirect(url_for('admin_users'))
+        
+    user_to_delete = User.query.get(user_id)
+    if user_to_delete:
+        if user_to_delete.username == 'admin':
+             flash('Cannot delete the main admin account.', 'danger')
+             return redirect(url_for('admin_users'))
+             
+        username = user_to_delete.username
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        
+        app.logger.warning(f'Admin deleted user: {username}')
+        flash(f'User {username} has been deleted.', 'warning')
+    
+    return redirect(url_for('admin_users'))
+
+
+# Route 10.7: Admin Reset Password (Manual)
+@app.route('/admin/users/reset-password/<int:user_id>')
+@login_required
+@admin_required
+def reset_password(user_id):
+    user = User.query.get(user_id)
+    
+    if user:
+        # Protectie: Nu resetam adminul
+        if user.username == 'admin':
+            flash('Cannot reset admin password here.', 'danger')
+            return redirect(url_for('admin_users'))
+            
+        # Setam parola default "123456"
+        default_pass = '123456'
+        user.password = generate_password_hash(default_pass, method='pbkdf2:sha256')
+        db.session.commit()
+        
+        app.logger.info(f'Admin forced password reset for user: {user.username}')
+        flash(f'Password for {user.username} reset to "{default_pass}".', 'warning')
+        
+    return redirect(url_for('admin_users'))
+
+
+# Route 10.8: View Specific User History (The Spy Feature)
+@app.route('/admin/users/history/<int:user_id>')
+@login_required
+@admin_required
+def view_user_history(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin_users'))
+    
+    # Luam tranzactiile userului respectiv
+    user_trans = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.date.desc()).all()
+    
+    return render_template('user_history.html', user=user, transactions=user_trans)
+
+
+# Route 10.9: Validate Order (Mark as Served)
+@app.route('/admin/transactions/validate/<int:trans_id>')
+@login_required
+@admin_required
+def validate_order(trans_id):
+    trans = Transaction.query.get(trans_id)
+    
+    if trans:
+        if trans.status == 'Pending':
+            trans.status = 'Completed'
+            db.session.commit()
+            app.logger.info(f'Admin validated order #{trans.id} for user {trans.owner.username}')
+            flash('Order marked as SERVED! ', 'success')
+        else:
+            flash('Order is already completed.', 'info')
+            
+        # Ne intoarcem la pagina de istoric a acelui user
+        return redirect(url_for('view_user_history', user_id=trans.user_id))
+    
+    return redirect(url_for('admin_dashboard'))
 
 # Route 11: Transaction History Page
 @app.route('/history')

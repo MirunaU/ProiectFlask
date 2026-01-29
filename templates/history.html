@@ -1,44 +1,56 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-header text-white" style="background-color: var(--chai-spice);">
-            <h4 class="mb-0 text-center">Transaction History</h4>
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"> Transaction History</h4>
+            <span class="badge bg-warning text-dark fs-6">Balance: {{ current_user.points }} pts</span>
         </div>
-        <div class="card-body">
-            <h5 class="mb-4">Current Balance: <span style="color: var(--matcha); font-weight: bold;">{{
-                    current_user.points }} Points</span></h5>
 
-            <table class="table table-hover">
-                <thead class="table-light">
+        <div class="card-body">
+            {% if transactions %}
+            <table class="table table-hover align-middle">
+                <thead>
                     <tr>
                         <th>Date</th>
                         <th>Description</th>
-                        <th class="text-end">Amount</th>
+                        <th>Points</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for trans in transactions %}
+                    {% for t in transactions %}
                     <tr>
-                        <td>{{ trans.date.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td>{{ trans.description }}</td>
+                        <td>{{ t.date.strftime('%d-%m-%Y %H:%M') }}</td>
 
-                        <td class="text-end fw-bold">
-                            {% if trans.amount > 0 %}
-                            <span class="text-success">+{{ trans.amount }}</span>
-                            {% else %}
-                            <span class="text-danger">{{ trans.amount }}</span>
-                            {% endif %}
+                        <td>{{ t.description }}</td>
+
+                        <td class="{{ 'text-success' if t.amount > 0 else 'text-danger' }} fw-bold">
+                            {{ '+' if t.amount > 0 else '' }}{{ t.amount }}
                         </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center text-muted">No transactions yet.</td>
+
+                        <td>
+                            {% if t.amount < 0 %} {% if t.status=='Pending' %} <span class="badge bg-warning text-dark">
+                                Pending</span>
+                                {% else %}
+                                <span class="badge bg-success">Served</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">Reward Received</span>
+                                {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <div class="text-center py-5">
+                <h3 class="text-muted">No transactions yet! </h3>
+                <p>Go to the menu and grab something delicious.</p>
+                <a href="{{ url_for('menu') }}" class="btn btn-primary">Go to Menu</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
