@@ -2,7 +2,7 @@
 
 Această aplicație web este un sistem de gestionare a punctelor de loialitate, dezvoltat în Python folosind framework-ul **Flask**. Proiectul include un mecanism de securitate pentru validarea tranzacțiilor (Logică Anti-Fraudă) și roluri distincte pentru utilizatori.
 
-## 📋 Funcționalități Principale
+##  Funcționalități Principale
 
 1. **Sistem de Autentificare:**
    - Login și Înregistrare securizată.
@@ -16,10 +16,10 @@ Această aplicație web este un sistem de gestionare a punctelor de loialitate, 
 3. **Audit:**
    - Sistem de logging pentru acțiunile critice (ștergeri, modificări sold).
 
-## 🛠️ Cerințe de Sistem
+##  Cerințe de Sistem
 - Python 3.8 sau mai nou.
 
-## 🚀 Instrucțiuni de Instalare și Rulare
+##  Instrucțiuni de Instalare și Rulare
 
 Urmați acești pași pentru a rula proiectul local:
 
