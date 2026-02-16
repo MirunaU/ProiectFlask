@@ -5,7 +5,7 @@ from datetime import datetime
 # Initialize the database variable
 db = SQLAlchemy()
 
-# --- 1. USER MODEL (Trebuie sa fie primul!) ---
+# --- 1. USER MODEL  ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -24,7 +24,7 @@ class Product(db.Model):
     points_cost = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(500))
 
-# --- 3. TRANSACTION MODEL (Trebuie sa fie ultimul!) ---
+# --- 3. TRANSACTION MODEL  ---
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Integer, nullable=False) # Negative for spending, Positive for earning
